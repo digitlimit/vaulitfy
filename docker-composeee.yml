@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+    app:
+        image: 'php:8.2-fpm'
+        container_name: app
+        working_dir: /var/www/html
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - laravel
+    web:
+        image: 'nginx:alpine'
+        container_name: web
+        ports:
+            - '8080:80'
+        volumes:
+            - '.:/var/www/html'
+            - './docker/nginx:/etc/nginx/conf.d/'
+        networks:
+            - laravel
+    mysql:
+        image: 'mysql:8.0'
+        container_name: mysql
+        environment:
+            MYSQL_DATABASE: laravel
+            MYSQL_USER: laravel
+            MYSQL_PASSWORD: secret
+            MYSQL_ROOT_PASSWORD: rootsecret
+        volumes:
+            - 'db_data:/var/lib/mysql'
+        networks:
+            - laravel
+    memcached:
+        image: 'memcached:alpine'
+        ports:
+            - '${FORWARD_MEMCACHED_PORT:-11211}:11211'
+        networks:
+            - sail
+networks:
+    laravel: null
+volumes:
+    db_data: null
+    sail-mysql:
+        driver: local
