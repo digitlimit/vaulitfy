@@ -4,6 +4,8 @@ namespace App\Console\Commands\Vault;
 
 use Illuminate\Console\Command;
 use Dotenv\Dotenv;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
 
 class PushEnv extends Command
 {
@@ -12,7 +14,7 @@ class PushEnv extends Command
      *
      * @var string
      */
-    protected $signature = 'vault:push-env';
+    protected $signature = 'vault:push-env {path} {--env=} {--force}';
 
     /**
      * Sync the environment variables with the Vault server.
@@ -23,6 +25,7 @@ class PushEnv extends Command
 
     /**
      * Execute the console command.
+     * @throws ConnectionException
      */
     public function handle(): int
     {
@@ -37,11 +40,11 @@ class PushEnv extends Command
         // Load the .env file
         $dotenv = Dotenv::createMutable($envDir, basename($envPath));
         $envVars = $dotenv->load();
+        $url = config('vault.address') . '/' . $this->argument('path');
 
-        // Convert the environment variables to JSON
-        $jsonOutput = json_encode($envVars, JSON_PRETTY_PRINT);
-
-        $this->info($jsonOutput);
+        // Push the environment variables to the Vault server
+        $response = Http::withToken(config('vault.token'))
+            ->put($url, ['data' => $envVars,]);
 
         return 0;
     }
