@@ -51,6 +51,13 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+RUN apt-get update \
+        && apt-get install -y cron
+
+COPY scheduler /etc/cron.d/scheduler
+RUN chmod 0644 /etc/cron.d/scheduler \
+    && crontab /etc/cron.d/scheduler
+
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.3
 
 RUN groupadd --force -g $WWWGROUP sail

@@ -45,7 +45,7 @@ class PushEnv extends Command
         // Push the environment variables to the Vault server
         $response = Http::withToken(config('vault.token'))
             ->put($url, ['data' => $envVars,]);
-dd($response);
+
         if ($response->successful()) {
             $this->info("The environment variables have been successfully pushed to the Vault server.");
             return 0;
