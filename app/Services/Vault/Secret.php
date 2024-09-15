@@ -13,10 +13,10 @@ class Secret
     protected array $env;
 
     public function __construct(
-        private readonly EnvReader $envReader
+        private readonly Env $envHelper
     ){
         $this->setEnv(
-            $this->envReader->load()->all()
+            $this->envHelper->load()->all()
         );
     }
 

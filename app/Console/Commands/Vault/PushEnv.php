@@ -3,7 +3,7 @@
 namespace App\Console\Commands\Vault;
 
 use Illuminate\Console\Command;
-use App\Services\Vault\EnvReader;
+use App\Services\Vault\Env;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -37,7 +37,7 @@ class PushEnv extends Command
         }
 
         // Load the .env file
-        $env = app(EnvReader::class)
+        $env = app(Env::class)
             ->load()
             ->all();
 

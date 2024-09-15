@@ -4,7 +4,7 @@ namespace App\Services\Vault;
 
 use Dotenv\Dotenv;
 
-class EnvReader
+class Env
 {
     private string $path;
 
@@ -68,5 +68,20 @@ class EnvReader
     public function all(): array
     {
         return $this->env;
+    }
+
+    public function put($key, $value): self
+    {
+        putenv("$key=$value");
+        return $this;
+    }
+
+    public function putAll(array $env): self
+    {
+        foreach ($env as $key => $value) {
+            $this->put($key, $value);
+        }
+
+        return $this;
     }
 }
