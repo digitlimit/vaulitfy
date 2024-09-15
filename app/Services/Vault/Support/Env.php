@@ -2,17 +2,16 @@
 
 namespace App\Services\Vault\Support;
 
-use App\Services\Vault\Repositories\Config\Loader;
 use Illuminate\Support\Env as BaseEnv;
 use App\Services\Vault\Secret;
+
 
 class Env extends BaseEnv
 {
     public static function get($key, $default = null)
     {
+        $path = 'secret/data/' . $key;
         $secret = app(Secret::class);
-      dd($secret);
-
 
         return parent::get($key, $default);
 

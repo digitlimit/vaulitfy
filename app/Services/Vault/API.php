@@ -3,10 +3,14 @@
 namespace App\Services\Vault;
 
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\Factory;
 
 class API
 {
+    public function __construct(
+        private readonly Factory $http
+    ){}
+
     private string $token = '';
 
     private string $address = '';
@@ -31,12 +35,12 @@ class API
     public function address(): string
     {
         return $this->address;
-        
+
     }
 
-    public function client(): PendingRequest
+    public function client(): Factory|PendingRequest
     {
-        return Http::withToken($this->token());
+        return $this->http->withToken($this->token());
     }
 
     public function get(string $path, array $data = []): ?array

@@ -2,20 +2,64 @@
 
 namespace App\Services\Vault;
 
+use Illuminate\Support\Facades\Cache;
+
 class Secret
 {
-    protected string $readPath;
+    protected ?string $readPath = null;
 
-    protected ?API $api;
+    protected ?API $api = null;
+
+    protected array $env;
 
     public function __construct(
         private readonly EnvReader $envReader
     ){
+        $this->setEnv(
+            $this->envReader->load()->all()
+        );
+    }
+
+    public function read(string $key, string $path = null): ?string
+    {
+        if ($path){
+            $this->setReadPath($path);
+        }
+
+        $path = $this->readPath();
+
+        $secrets = $this->api()->get($path) ?? [];
+
+        return $secrets['data'][$key] ?? null;
+    }
+
+    public function write(array $data = [], string $path = null): ?array
+    {
+        if ($path){
+            $this->setReadPath($path);
+        }
+
+        $path = $this->readPath();
+
+        return $this->api->post($path, $data);
+    }
+
+    public function setEnv(array $env): static
+    {
+        $this->env = $env;
+        return $this;
     }
 
     public function setApi(API $api): static
     {
         $this->api = $api;
+        return $this;
+    }
+
+    public function setReadPath(string $readPath): static
+    {
+        $this->readPath = trim($readPath, '/');
+
         return $this;
     }
 
@@ -25,37 +69,87 @@ class Secret
             return $this->api;
         }
 
-        $env = $this->envReader->load()->all();
-
-        $this->api = (new API())
-            ->setAddress($env['VAULT_ADDR'])
-            ->setToken($env['VAULT_TOKEN']);
+        $this->api = app(API::class)
+            ->setAddress($this->env['VAULT_ADDR'])
+            ->setToken($this->env['VAULT_TOKEN']);
 
         return $this->api;
     }
 
-    public function setReadPath(string $readPath): static
-    {
-        $this->readPath = $readPath;
-        return $this;
-    }
-
     public function readPath(): string
     {
-        return $this->readPath;
+        if ($this->readPath) {
+            return $this->readPath;
+        }
+
+        return $this->defaultReadPath();
     }
 
-    public function read(string $path = null, array $data = []): ?array
+    public function cacheable(): bool
     {
-        $path = $path ?? $this->readPath();
+        if(! isset($this->env['VAULT_CACHEABLE'])) {
+            return false;
+        }
 
-        return $this->api->get($path, $data);
+        return strtolower($this->env['VAULT_CACHEABLE']) === 'true';
     }
 
-    public function write(string $path = null, array $data = []): ?array
+    public function cachePrefix(): string
     {
-        $path = $path ?? $this->readPath();
+        return $this->env['VAULT_CACHE_PREFIX'] ?? 'vault:';
+    }
 
-        return $this->api->post($path, $data);
+    public function cacheKey(string $key): string
+    {
+        return $this->cachePrefix() . $key;
+    }
+
+    public function cacheTtl(): int
+    {
+        return $this->env['VAULT_TTL'] ?? 60;
+    }
+
+    public function cache($key, $default = null)
+    {
+        $cacheKey = $this->cacheKey($key);
+
+        return Cache::remember(
+            $cacheKey,
+            $this->cacheTtl(),
+            fn() => $this->read($key, $default)
+        );
+    }
+
+    public function defaultReadPath()
+    {
+        return $this->env['VAULT_READ_PATH'];
+    }
+
+    public function hasOnly(): bool
+    {
+        return isset($this->env['VAULT_ONLY'])
+            && $this->env['VAULT_ONLY'];
+    }
+
+    public function only(): array
+    {
+        if(! $this->hasOnly()) {
+            return [];
+        }
+
+        $only = explode(',', $this->env['VAULT_ONLY']);
+
+        return array_map('trim', $only);
+    }
+
+    public function inOnly(string $key): bool
+    {
+        $only = $this->only();
+
+        if(empty($only)) {
+            return false;
+        }
+
+        return in_array($key, $only);
     }
 }
