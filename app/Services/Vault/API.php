@@ -7,15 +7,9 @@ use Illuminate\Support\Facades\Http;
 
 class API
 {
-    private string $token;
+    private string $token = '';
 
-    private string $address;
-
-    public function __construct()
-    {
-        $this->setToken(config('vault.token'));
-        $this->setAddress(config('vault.address'));
-    }
+    private string $address = '';
 
     public function setToken(string $token): self
     {
@@ -37,6 +31,7 @@ class API
     public function address(): string
     {
         return $this->address;
+        
     }
 
     public function client(): PendingRequest

@@ -3,7 +3,7 @@
 namespace App\Console\Commands\Vault;
 
 use Illuminate\Console\Command;
-use Dotenv\Dotenv;
+use App\Services\Vault\EnvReader;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -14,7 +14,7 @@ class PushEnv extends Command
      *
      * @var string
      */
-    protected $signature = 'vault:push-env {path} {--env=} {--force}';
+    protected $signature = 'vault:push-env {path?} {--env=} {--force}';
 
     /**
      * Sync the environment variables with the Vault server.
@@ -30,7 +30,6 @@ class PushEnv extends Command
     public function handle(): int
     {
         $envPath = $this->option('env') ?? base_path('.env');
-        $envDir = dirname($envPath);
 
         if (!file_exists($envPath)) {
             $this->error("The .env file at path '{$envPath}' does not exist.");
@@ -38,13 +37,15 @@ class PushEnv extends Command
         }
 
         // Load the .env file
-        $dotenv = Dotenv::createMutable($envDir, basename($envPath));
-        $envVars = $dotenv->load();
-        $url = config('vault.address') . '/' . $this->argument('path');
+        $env = app(EnvReader::class)
+            ->load()
+            ->all();
+
+        $url = $env['VAULT_ADDR'] . '/' . $this->argument('path');
 
         // Push the environment variables to the Vault server
-        $response = Http::withToken(config('vault.token'))
-            ->put($url, ['data' => $envVars,]);
+        $response = Http::withToken($env['VAULT_TOKEN'])
+            ->put($url, ['data' => $env,]);
 
         if ($response->successful()) {
             $this->info("The environment variables have been successfully pushed to the Vault server.");
