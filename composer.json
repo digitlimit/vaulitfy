@@ -6,6 +6,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "filament/filament": "^3.2",
+        "funkjedi/composer-include-files": "^1.1",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9"
     },
@@ -32,7 +34,8 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
@@ -49,15 +52,26 @@
     "extra": {
         "laravel": {
             "dont-discover": []
-        }
+        },
+        "include_files": [
+            "bootstrap/helpers.php"
+        ]
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./plugin/helper"
+        }
+    ],
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "digitlimit/helper": true,
+            "funkjedi/composer-include-files": true
         }
     },
     "minimum-stability": "stable",

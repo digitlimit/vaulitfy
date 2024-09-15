@@ -1,0 +1,17 @@
+{
+    "name": "digitlimit/helper",
+    "type": "composer-plugin",
+    "description": "A custom Composer plugin to include PHP files.",
+    "autoload": {
+        "psr-4": {
+            "DigitLimit\\Helper\\": "src/"
+        }
+    },
+    "require": {
+        "composer-plugin-api": "^1.0 || ^2.0"
+    },
+    "extra": {
+        "class": "DigitLimit\\Helper\\Plugin"
+    },
+    "version": "1.0.5"
+}
