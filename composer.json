@@ -57,12 +57,6 @@
             "bootstrap/helpers.php"
         ]
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "./plugin/helper"
-        }
-    ],
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",

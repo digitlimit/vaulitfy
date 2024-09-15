@@ -29,6 +29,6 @@ class Secret extends Command
     {
         $secret = app(VaultSecret::class);
 
-        dd($secret->read('DB_PASSWORD'));
+        dd($secret->all());
     }
 }

@@ -10,17 +10,17 @@ class Secret
 
     protected ?API $api = null;
 
-    protected array $env;
+    protected array $data = [];
 
     public function __construct(
-        private readonly Env $envHelper
+        private readonly Env $env
     ){
-        $this->setEnv(
-            $this->envHelper->load()->all()
+        $this->setData(
+            $this->env->load()->all()
         );
     }
 
-    public function read(string $key, string $path = null): ?string
+    public function all($path = null): array
     {
         if ($path){
             $this->setReadPath($path);
@@ -30,7 +30,14 @@ class Secret
 
         $secrets = $this->api()->get($path) ?? [];
 
-        return $secrets['data'][$key] ?? null;
+        return $secrets['data'] ?? [];
+    }
+
+    public function read(string $key, string $path = null): ?string
+    {
+        $secrets = $this->all($path);
+
+        return $secrets[$key] ?? null;
     }
 
     public function write(array $data = [], string $path = null): ?array
@@ -44,9 +51,9 @@ class Secret
         return $this->api->post($path, $data);
     }
 
-    public function setEnv(array $env): static
+    public function setData(array $data): static
     {
-        $this->env = $env;
+        $this->data = $data;
         return $this;
     }
 
@@ -70,8 +77,8 @@ class Secret
         }
 
         $this->api = app(API::class)
-            ->setAddress($this->env['VAULT_ADDR'])
-            ->setToken($this->env['VAULT_TOKEN']);
+            ->setAddress($this->data['VAULT_ADDR'])
+            ->setToken($this->data['VAULT_TOKEN']);
 
         return $this->api;
     }
@@ -87,16 +94,16 @@ class Secret
 
     public function cacheable(): bool
     {
-        if(! isset($this->env['VAULT_CACHEABLE'])) {
+        if(! isset($this->data['VAULT_CACHEABLE'])) {
             return false;
         }
 
-        return strtolower($this->env['VAULT_CACHEABLE']) === 'true';
+        return strtolower($this->data['VAULT_CACHEABLE']) === 'true';
     }
 
     public function cachePrefix(): string
     {
-        return $this->env['VAULT_CACHE_PREFIX'] ?? 'vault:';
+        return $this->data['VAULT_CACHE_PREFIX'] ?? 'vault:';
     }
 
     public function cacheKey(string $key): string
@@ -106,7 +113,7 @@ class Secret
 
     public function cacheTtl(): int
     {
-        return $this->env['VAULT_TTL'] ?? 60;
+        return $this->data['VAULT_TTL'] ?? 60;
     }
 
     public function cache($key, $default = null)
@@ -122,13 +129,13 @@ class Secret
 
     public function defaultReadPath()
     {
-        return $this->env['VAULT_READ_PATH'];
+        return $this->data['VAULT_READ_PATH'];
     }
 
     public function hasOnly(): bool
     {
-        return isset($this->env['VAULT_ONLY'])
-            && $this->env['VAULT_ONLY'];
+        return isset($this->data['VAULT_ONLY'])
+            && $this->data['VAULT_ONLY'];
     }
 
     public function only(): array
@@ -137,7 +144,7 @@ class Secret
             return [];
         }
 
-        $only = explode(',', $this->env['VAULT_ONLY']);
+        $only = explode(',', $this->data['VAULT_ONLY']);
 
         return array_map('trim', $only);
     }
