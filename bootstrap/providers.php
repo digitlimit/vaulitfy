@@ -2,5 +2,5 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    App\Providers\VaultServiceProvider::class,
+    App\Providers\Filament\AdminPanelProvider::class,
 ];

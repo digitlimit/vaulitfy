@@ -3,6 +3,7 @@
 namespace App\Services\Vault;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Log\LogManager;
 
 class Secret
 {
@@ -37,7 +38,14 @@ class Secret
     {
         $secrets = $this->all($path);
 
-        return $secrets[$key] ?? null;
+        app(LogManager::class)
+            ->info('Reading key from vault server', ['key' => $key, 'path' => $path, 'secrets' => $secrets, 'secret' => $secrets[$key] ?? null]);
+
+        if ($secrets[$key] ?? null) {
+            return $this->transformValue($secrets[$key]);
+        }
+
+        return null;
     }
 
     public function write(array $data = [], string $path = null): ?array
@@ -118,6 +126,8 @@ class Secret
 
     public function cache($key, $default = null)
     {
+        app(LogManager::class)
+            ->info('Reading key from cache', ['key' => $key]);
         $cacheKey = $this->cacheKey($key);
 
         return Cache::remember(
@@ -158,5 +168,36 @@ class Secret
         }
 
         return in_array($key, $only);
+    }
+
+    public function transform(array $data): array
+    {
+        return array_map(
+            fn($value) => $this->transformValue($value),
+            $data
+        );
+    }
+
+    protected function transformValue($value)
+    {
+        if (is_string($value)) {
+            if (strtolower($value) === 'null') {
+                return null;
+            }
+
+            if (strtolower($value) === 'true') {
+                return true;
+            }
+
+            if (strtolower($value) === 'false') {
+                return false;
+            }
+
+            if (is_numeric($value)) {
+                return str_contains($value, '.') ? (float) $value : (int) $value;
+            }
+        }
+
+        return $value;
     }
 }
